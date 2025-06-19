@@ -21,10 +21,16 @@ We architect our models for **generalised betting intelligence**, across games, 
 
 ```mermaid
 graph TD
-    A[Mamba-Transformer Stack] --> B[PPO RL Loop]
-    B --> C[MoE Router]
-    C --> D[LLM Reasoning Layer]
-    D --> E[Prediction Head: P(win), P(score), P(odds range)]
+    subgraph Core
+        M[Mamba–Transformer Fusion]
+        R[RL Fine-Tuning Loop]
+        S[MoE Router]
+        L[Logical Reasoning LLM]
+        M --> R
+        R --> S
+        S --> L
+    end
+    L --> E[Prediction Head]
 ```
 
 ---
@@ -296,10 +302,10 @@ We implement a two-tier model execution strategy:
 
 ```mermaid
 flowchart TD
-    U(User Query) --> E[Edge LLM (Fast)]
-    E -->|Confidence > 0.8| A[Answer Return]
-    E -->|Low Confidence| C[Cloud Audit LLM]
-    C --> A
+    CloudLLM[Cloud LLM: Deep Query]
+    EdgeLLM[Edge LLM: Fast Response]
+    Merge[Merge + MoE Route]
+    CloudLLM --> EdgeLLM --> Merge
 ```
 
 > This hybrid architecture balances UX latency and strategic inference depth.
@@ -380,7 +386,7 @@ flowchart LR
     P[FP16 ckpt] --> Q[INT4 GPTQ]
     Q --> S[SparseGPT 2:4]
     S --> D[Distillation]
-    D --> E[Edge Artefact<br/>~800 MB]
+    D --> E[Edge Artefact\n~800 MB]
     D --> C[Cloud Artefact<br/>INT8 + vLLM]
 ```
 
