@@ -2,7 +2,6 @@
 
 > _“No AI model can outlearn the flaws of its data. In predictive betting, information precision defines profitability.”_
 
-This module expands **Section 1 · High-Quality Data Curation** of the main `README` and gives implementation-level detail.
 
 ---
 
@@ -23,7 +22,7 @@ Let \( \mathcal{D} = \{(x_i, y_i)\} \) denote the curated dataset used to learn 
 | Social/News | lineup leaks, injuries | Twitter fire-hose, RSS | 30 s |
 | On-chain Bets | wallet-level wagers | TON GraphQL | near-block |
 
-*The **Betting Odds** feed is essential for ROI benchmarks listed in README §4.*
+
 
 ---
 
@@ -31,7 +30,7 @@ Let \( \mathcal{D} = \{(x_i, y_i)\} \) denote the curated dataset used to learn 
 
 ```mermaid
 flowchart TD
-    A[Raw Feeds] --> B[Parser & Struct-VBERT Schema]  %% match README wording
+    A[Raw Feeds] --> B[Parser & Struct-VBERT Schema]
     B --> C{Validator}
     C -->|✔︎| D[Feature Store¹]
     C -->|✖︎| E[Noise Queue]
@@ -49,9 +48,9 @@ flowchart TD
 We apply semi-supervised consensus:  
 \[
 L = \alpha\,L_{AI} + (1-\alpha)\,L_{Human},\quad \alpha = 0.6
-\]
+]\
 
-Resulting label accuracy ≥ 96 % on hold-out (*matches README evaluation κ > 0.83*).
+Resulting label accuracy ≥ 96 % on hold-out.
 
 ---
 
@@ -85,13 +84,13 @@ Evaluation metrics (LogLoss, Brier) match README §4.
 | Version | DVC, LakeFS | snapshot-hash |
 | Monitor | Prometheus, Grafana | SLO alerts |
 
+
 ---
 
 ## 8  DevOps SLA
 
 - Mean ingestion latency \(< 3\,\text{s}\)  
 - Pipeline uptime 99.98 % (2025 Q1)  
-- Canary tests track drift vs README ROI metrics.
 
 ---
 
@@ -104,7 +103,6 @@ Evaluation metrics (LogLoss, Brier) match README §4.
 
 ---
 
-> **Note:** This pipeline module is fully consistent with *High-Quality Data Curation* in the main **AI Prediction Model Research** README.
 
 
 ---
@@ -126,6 +124,7 @@ Based on industry-standard practices and internal frameworks, VEGAIS defines hig
 | **Pipeline**   | Data Collection · Data Preprocessing · Data Annotation · Data Augmentation · Data Evaluation · Iteration & Optimization |
 | **Build Phase**| Data Governance · Dynamic Data Updates         |
 | **Core Principles** | Quality · Scale · Relevance · Diversity · Timeliness · Updateability |
+
 
 This section reflects the internal lifecycle from raw ingestion to structured predictive training sets and continuous refreshment.
 
@@ -163,6 +162,7 @@ To support rich prediction tasks and betting strategy modeling, we define an ext
 | Betting Markets   | odds_home_win               | Decimal odds |
 |                  | odds_draw                   |                  |
 |                  | odds_away_win               |                  |
+
 
 ### B.2 Notes
 
