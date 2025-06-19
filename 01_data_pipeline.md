@@ -46,9 +46,8 @@ flowchart TD
 ## 4  Annotation & Human–AI Loop
 
 We apply semi-supervised consensus:  
-\[
-L = \alpha\,L_{AI} + (1-\alpha)\,L_{Human},\quad \alpha = 0.6
-]\
+
+L = \alpha L_\mathrm{AI} + (1 - \alpha) L_\mathrm{Human},\quad \alpha = 0.6
 
 Resulting label accuracy ≥ 96 % on hold-out.
 
