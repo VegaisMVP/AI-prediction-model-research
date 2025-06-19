@@ -1,5 +1,4 @@
-
-# 🧠 Training Pipeline — From Token to Tensor
+# 🧑‍🧬 Training Pipeline — From Token to Tensor
 
 > _"Not all training is equal. What matters is relevance, recurrence, and reinforcement."_
 
@@ -12,104 +11,220 @@ This document outlines the training workflow of the VEGAIS Prediction Engine, co
 ```mermaid
 graph TD
     A[Raw Tokenised Tasks] --> B[Prompt Generator]
-    B --> C[Supervised Fine-Tuning (SFT)]
-    C --> D[Reinforcement Learning (PPO / DPO / GRPO)]
-    D --> E[LoRA / QLoRA Adapter Tuning]
-    E --> F[Model Compression (Int8 / GPTQ)]
-    F --> G[Checkpoints]
-    G --> H[Eval Harness (LogLoss / ROI)]
-    H -->|score↑| I[Model Promotion]
-    H -->|score↓| C
-    I --> J[Model Serving Dispatcher]
-    J --> K[Edge + Cloud Routing]
+    B --> C[Supervised Fine-Tuning - SFT]
+    C --> D[Reinforcement Learning - PPO]
+    D --> E[Adapter Tuning - LoRA / QLoRA]
+    E --> F[Quantised Checkpoint Output]
 ```
 
-Each stage in the pipeline targets a specific optimization axis:
-- **SFT** aligns the model to labelled historical outcomes
-- **RLHF (PPO / DPO / GRPO)** aligns with long-term value functions (ROI)
-- **Adapter tuning (LoRA)** keeps updates modular
-- **Compression** reduces inference latency without sacrificing performance
-- **Eval loop** enforces promotion based on reward-aligned gain
-- **Dispatcher** selects optimal serving architecture
-- **Routing** balances between edge inference (low-latency) and cloud LLM (high-depth reasoning)
+Each stage targets a specific aspect:
+- **SFT** aligns model outputs to labelled prediction targets.
+- **RLHF (PPO)** aligns model incentives to real-match outcomes (e.g. ROI, accuracy).
+- **LoRA / QLoRA** enables lightweight parameter-efficient refinement.
 
-### 1.1 Task Dispatcher & Scheduling Logic
-- Incoming task types (e.g., win prediction, over/under) are tagged via classifier heads.
-- Each task maps to a pipeline config (prompt + tuning strategy + reward scheme).
-- Adaptive sampling increases batch ratio for low-accuracy or high-volatility task types.
+> 📚 _References:_
+> - Schulman et al., "Proximal Policy Optimization Algorithms" (2017)
+> - Dettmers et al., "QLoRA: Efficient Finetuning of Quantized LLMs" (ICML 2023)
+> - Raffel et al., "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer" (T5)
+> - OpenAI, "Fine-Tuning GPT-3 Models" (2022)
+> - HuggingFace Blog: https://huggingface.co/blog/rlhf
+
+The above design ensures that the model does not merely memorize token-level correlations but instead generalizes based on high-fidelity data and market-aware feedback. The merged pipeline reduces deployment cost while maintaining inference robustness under distributional shifts.
+
+A diagrammatic breakdown of the full branching merge is provided in Section 7.
+
+---
+
+## 🧪 2. Prompt Construction & Token Policy
+
+### 2.1 Task Templates
+| Task Type | Template Format | Example |
+|-----------|-----------------|---------|
+| Score Win Prediction | Q&A | "Who will win: Team A vs Team B?" → ["Team A"] |
+| Spread Betting Margin | Regression | "Predict score difference: A vs B" → ["-4.5"] |
+| Over/Under Odds | Classification | "Will total be over 215.5?" → [Yes/No] |
+
+### 2.2 Tokenisation Policy
+- SentencePiece + BPE hybrid
+- Domain keywords enforced via regex patterns
+- Custom token dictionary for rare player/team names
+
+---
+
+## 🤪 3. Curriculum & Feedback Loops
+
+```mermaid
+flowchart TD
+    Start --> A[Base SFT Dataset]
+    A --> B[Match ROI Feedback Collector]
+    B --> C[Reward-weighted Replay Buffer]
+    C --> D[RL Trainer: PPO / DPO]
+    D --> E[Checkpoint Evaluation]
+    E -->|If score↑| F[Checkpoint Promotion]
+    E -->|Else| A
+```
+
+- Rewards include: Prediction ROI, Hit Rate, Long-tail Recall.
+- Poor predictions recycled into hard negatives.
+
+### 3.1 Reinforcement Reward Function
+Let \( p_{win}, p_{actual} \) be predicted and actual win probabilities, and \( r \) be bet outcome (1 for win, 0 for loss):
+
+\[
+\text{Reward} = \lambda_1 \cdot (1 - \text{LogLoss}(p_{win}, p_{actual})) + \lambda_2 \cdot \text{ROI}(r)
+\]
+
+Where:
+- \( \lambda_1, \lambda_2 \) are tunable weight parameters.
+- ROI = (Total Payout - Stake) / Stake.
+
+> 📚 _References:_
+> - Christiano et al., "Deep Reinforcement Learning from Human Preferences" (2017)
+> - Ouyang et al., "Training language models to follow instructions with human feedback" (InstructGPT, 2022)
+> - Google Brain, "Feedback loops in ML: Human + AI co-supervision", 2021
+
+
+---
+
+## 🌍 4. Multi-Task & Cross-Domain Generalisation
+
+### 4.1 Multi-Task Strategy
+- Shared encoder backbone, task-specific heads
+- Alternating batches: win/draw/over-under/spread
+- Hard examples routed into replay buffer for continued RL training
+
+### 4.2 Cross-Lingual Transfer
+- Matches and betting queries in EN, CN, ES via multilingual embedding alignment
+- Synthetic translations generated via LLaMA-m2m and filtered by semantic consistency score > 0.9
+
+---
+
+## 🎛️ 5. Multimodal Training & Fusion
+
+- Vision+Text fusion for match highlights, injury detection, form cues
+- Audio stream integration (commentary → momentum inference)
+- Early fusion via CLIP-style embedding bridge
+- Late fusion via MoE gate routing
 
 ```mermaid
 graph TD
-    A[Incoming Batch] --> B{Task Type}
-    B --> C1[Win Prediction Pipeline]
-    B --> C2[Margin Spread Pipeline]
-    B --> C3[Over/Under Pipeline]
-    C1 --> D1[Prompt + LoRA + PPO]
-    C2 --> D2[Prompt + Full FineTune]
-    C3 --> D3[Prompt + DPO]
+    A[Match Video Frame] --> B[Vision Encoder]
+    C[Commentary Text] --> D[Text Encoder]
+    B --> E[Fusion Layer]
+    D --> E
+    E --> F[Unified Representation]
 ```
 
 ---
 
-## 🎯 2. RL Multi-Agent Architectures & Scheduling
+## 🧽 6. RL Training Scheduler
 
-### 2.1 Agent Coordination Framework
-- Multiple agents trained concurrently on overlapping prediction spaces.
-- Policy coordination via actor-critic synchronization and meta-controller.
+- Dynamic batch shaping (riskier matches more weight)
+- On-policy vs off-policy mixture adjusted via Sharpe ratio
+- Adaptive reward shaping using momentum decay
+
+```python
+def adaptive_weighting(risk, momentum):
+    return base_reward * (1 + risk_score * 0.2) * (1 + momentum_decay)
+```
+
+---
+
+## 🔁 7. Model Merging & Knowledge Distillation
+
+- Teacher-student pipeline (expert → quantised distilled)
+- Merging local LLMs + edge-expert agents using weighted sum:
+
+\[
+W_{merged} = \alpha \cdot W_{local} + (1 - \alpha) \cdot W_{expert}
+\]
+
+- LayerNorm stats fused post-merge
+- MoE policies preserved across branches
+
+### Merging Diagram
 
 ```mermaid
 graph TD
-    A1[Agent A: Spread Tasks] --> C[Meta-Controller]
-    A2[Agent B: Over/Under Tasks] --> C
-    C --> D[Policy Aggregator]
-```
-
-### 2.2 Token-Budget Aware Scheduler
-- Dynamic routing based on:
-  - Task urgency
-  - Model latency constraints
-  - Token quota (edge/cloud budget)
-- FIFO+RL hybrid buffer ensures freshness and reward alignment.
-
----
-
-## ♻️ 3. Online Incremental Learning
-
-- Checkpoints deployed online continue to learn via:
-  - Shadow-label match feedback
-  - Live bet outcome alignment
-- Reservoir sampling maintains historical memory balance.
-
-```math
-\text{Update}_{t} = \eta (\hat{y}_{t} - y_{t}) + \lambda R_t
+    L1[Local Expert Model] --> M[Merging Engine]
+    L2[Edge Expert Model] --> M
+    M --> D[Distilled Model Output]
 ```
 
 ---
 
-## ✅ 4. Model Validation, Online Metrics & AutoML
+## ⚙️ 8. Distributed Training Stack
 
-### 4.1 Evaluation Regimes
-- **Offline**: Brier score, LogLoss, calibration error
-- **Backtest ROI**: Simulation-based policy replay across historical lines
-- **Online Shadow Eval**: Parallel inference on live tasks without executing
-- **Canary Deployments**: Low-volume test serving to assess reward delta
+| Layer | Tooling |
+|-------|---------|
+| Orchestration | Airflow / Flyte / Ray Tune |
+| Training Backend | PyTorch Lightning + DeepSpeed |
+| Resource Scaling | A100x8 / H100x4 via Kubernetes |
+| Logging & Eval | Weights & Biases / Triton Logs |
 
-### 4.2 Parameter Search Visualisation
+### 8.1 Example: PPO Fine-Tuning
+```python
+from trl import PPOTrainer
+trainer = PPOTrainer(model, ref_model, tokenizer, config)
+trainer.train()
+```
+
+---
+
+## 📏 9. Evaluation Harness
+
+- Human-in-the-loop scoring via expert pick reviews
+- Statistical Metrics:
+  - LogLoss, Brier Score, ROC-AUC
+  - ROI Backtest on historical betting scenarios
+
+```mermaid
+flowchart TD
+    EvalStart[Start Evaluation] --> Metrics[Compute Metrics]
+    Metrics --> Report[Publish Score Report]
+    Report --> Compare[Compare with Prev ckpt]
+    Compare -->|Improved| Promote[Checkpoint Promoted]
+    Compare -->|Degraded| Recycle[Recycle to Training]
+```
+
+---
+
+## 🔀 10. Multi​-Strategy RL Fusion & AutoML Controller
+
+### 10.1 Strategy Pool
+- **Value​-based** (PPO)
+- **Preference​-based** (DPO)
+- **Risk​-constrained** (GRPO)
+
+Bandit controller selects strategy per task slice by N​-armed UCB on rolling ROI.
+
+```python
+ucb = mu + c * (2*np.log(total)/count)**0.5
+```
+
+### 10.2 AutoML Hyper​-Search
+- Optuna + W&B sweeps (learning​-rate, λ weights, LoRA​-rank)
+- Early stopping on Sharpe@1​-week
+
+### 10.3 Param Search Visual
 ```mermaid
 graph LR
-    A[Grid Search] --> B[ROI Surface Map]
-    A --> C[Calibration Landscape]
-    A --> D[Volatility Sensitivity Map]
+    Search-->ROI[ROI Surface]
+    Search-->Cal[Calibration Heatmap]
+    Search-->Risk[Risk​-Return Pareto]
 ```
 
-### 4.3 Drift Detection & Mitigation
-- Monitor distribution shifts in input odds + match metadata (KL-divergence threshold)
-- Trigger reweighting or replay buffer reselection
-- Annotated adversarial examples recycled
+---
 
-### 4.4 AutoML + Policy Search
-- Hyperparameter search + reward model tuning
-- Multi-objective RL: ROI, risk-adjusted return, long-tail capture
-- Strategy ensemble using bandit controller across task variants
+## 📡 11. Data Drift Detection & Self​-Healing
+
+- KL divergence on odds distribution (τ=0.15)
+- Population stability index (PSI) on match meta features
+- Trigger fast LoRA patch and buffer refresh when drift detected.
 
 ---
+
+## 🤖 12. Online Incremental Update & Token​-Budget Scheduler
+
+- Reservoir sampling size = 50k examples
+- Token cost guard: if budget <5% remaining, demote low​-risk tasks to next cycle.
